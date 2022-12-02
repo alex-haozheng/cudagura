@@ -29,4 +29,3 @@ int main(){
    	    printf("a: %f, b: %f, o: %f\n", a[i], b[i], out[i]);
     }
 }
-
