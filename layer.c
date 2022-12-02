@@ -1,19 +1,40 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void to_csr(int offset[], int values[], int len) {	
-//	int edges[sizeof(values)/sizeof(*values)];
-	for (int i = 0; i < len; ++i) {
-		if (i + 1 < len) {
-			for (int j = offset[i]; j < offset[i+1]; ++j) {
-				printf("%d, %d\n", i, values[j]); 
-			}
-		} else {
-			for (int j = offset[i]; j < len; ++j) {	
-				printf("%d, %d\n", i, values[j]); 
-			}
+void to_graph(float offset[], float values[], int len) {	
+	//	int edges[sizeof(values)/sizeof(*values)];
+	for (int i = 0; i < len - 1; ++i) {
+		for (int j = offset[i]; j < offset[i+1]; ++j) {
+			printf("%d, %f\n", i, values[j]); 
 		}
 	}	
+}
+
+void to_csr(float graph[][2], int len) {
+	// len(offset) == num_nodes + 1 (will hardcode this for now)
+	float offset[5];
+	float indices[len];	
+	int currN = -1;
+	// loop through to len
+	for (int i = 0; i < len; ++i) {
+		while (graph[i][0] != currN) {			
+			printf("graph value %f\n", graph[i][0]);
+			offset[++currN] = i;
+		}
+		indices[i] = graph[i][1];
+	}
+	offset[++currN] = len;
+	for (int i = 0; i < 5; ++i) {
+		printf("offset %d: %f\n", i, offset[i]);
+	}
+	for (int i = 0; i < len; ++i) {
+		printf("indices %d: %f\n", i, indices[i]);
+	}
+}
+
+
+void sample_layer(int training[]) {
+	// given as [a,b]
 }
 
 
@@ -24,9 +45,17 @@ int main() {
 	// value arr: [1, 2, 3, 7, 4, 5]
 
 	// todo: generate edges from offset arr & value arr
-	int o[] = {0, 3, 5, 5, 6};
-	int val[] = {1, 2, 3, 4, 7, 5};
+	float o[] = {0, 3, 5, 5, 6};
+	float val[] = {1, 2, 3, 4, 7, 5};
 	
 	int l = sizeof(o)/sizeof(*o);
-	to_csr(o, val, l);
+	to_graph(o, val, l);
+
+	printf("\n");
+
+	float g[6][2] = {{0, 1}, {0, 2}, {0, 3}, {1, 4}, {1, 7}, {3, 5}};
+
+	to_csr(g, 6);
+
+
 }
