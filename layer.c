@@ -1,5 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
+
+typedef struct block {
+	size_t n_offsets;
+	size_t n_values;
+	size_t* offsets;
+	size_t* values;
+} block;
+
 
 void to_graph(float offset[], float values[], int len) {	
 	//	int edges[sizeof(values)/sizeof(*values)];
@@ -49,7 +58,7 @@ int main() {
 	float val[] = {1, 2, 3, 4, 7, 5};
 	
 	int l = sizeof(o)/sizeof(*o);
-	to_graph(o, val, l);
+	//to_graph(o, val, l);
 
 	printf("\n");
 
