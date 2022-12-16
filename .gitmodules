@@ -1,0 +1,6 @@
+[submodule "uva/torch-quiver"]
+	path = uva/torch-quiver
+	url = https://github.com/quiver-team/torch-quiver.git
+[submodule "uva/cub"]
+	path = uva/cub
+	url = https://github.com/NVIDIA/cub.git
