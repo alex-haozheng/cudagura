@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <cub/cub.cuh>
 
 using namespace std;
 
