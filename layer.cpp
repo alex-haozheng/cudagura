@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
-#include <cub/cub.cuh>
+// #include <cub/cub.cuh>
 
 using namespace std;
 
@@ -68,7 +68,7 @@ void sample_layer(vector<vector<float>> graph, struct block* t_block) {
 	t_block->unique = t_block->values;
 	// have all the values
 	sort(t_block->unique.begin(), t_block->unique.end());
-	cout << t_block->unique.size();
+	cout << "size of next layer " << t_block->unique.size() << "\n";
 	vector<float>::iterator ip = unique(t_block->unique.begin(), t_block->unique.begin() + t_block->unique.size());
 
 	t_block->unique.resize(distance(t_block->unique.begin(), ip));
@@ -100,7 +100,6 @@ int main() {
 
 	vector<vector<float>> g = {{0, 1}, {0, 2}, {0, 3}, {1, 4}, {1, 7}, {3, 5}};
 	struct block b = { {0, 3, 5, 5, 6}, {1, 2}, {1, 2}};
-
 
 	// to_csr(g);
 	sample_layer(g, &b);
