@@ -3,7 +3,7 @@ import dgl
 import torch
 import numpy as np
 
-dataset = DglNodePropPredDataset(name='ogbn-arxiv')
+dataset = DglNodePropPredDataset(name='ogbn-arxiv', root='../data')
 split_idx = dataset.get_idx_split()
 
 # there is only one graph in Node Property Prediction datasets
