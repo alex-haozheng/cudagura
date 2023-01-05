@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
-#include <cub/cub.cuh>
+// #include <cub/cub.cuh>
 
 using namespace std;
 
@@ -51,7 +51,7 @@ void to_csr(vector<vector<float>> graph) {
 	}
 }
 
-
+// todo: add one more parameter: vector<int> targetNodes
 void sample_layer(vector<vector<float>> graph, struct block* t_block) {
 	map<float, vector<float>> m;
 	//loop for graph (tested)
@@ -101,7 +101,12 @@ int main() {
 	vector<vector<float>> g = {{0, 1}, {0, 2}, {0, 3}, {1, 4}, {1, 7}, {3, 5}};
 	struct block b = { {0, 3, 5, 5, 6}, {1, 2}, {1, 2}};
 
-
+	block arr[4];
+	vector<int> targetNodes = {1,2,3,4};
+	arr[0].unique = targetNodes
 	// to_csr(g);
+	for (int i = 0; i < 3; ++i) {
+		// sampole_layer(graph, &block[i+1], block[i].uniqyu
+	}
 	sample_layer(g, &b);
 }
