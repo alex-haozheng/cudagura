@@ -57,7 +57,7 @@ void to_csr(vector<vector<int>> graph) {
 }
 
 // todo: add one more parameter: vector<int> targetNodes
-void sample_layer(struct graphStruct* graph, struct block* t_block, vector<int> nodes) {
+void sample_layer(struct graphStruct* graph, struct block* t_block, vector<int> target) {
 	// for (int x : t_block->unique) {
 	// 	auto search = m.find(x);
 	// 	if (search != m.end()) {
@@ -66,7 +66,7 @@ void sample_layer(struct graphStruct* graph, struct block* t_block, vector<int> 
 	// }
 	// have all the values
 	int offset = 0;
-	for (int x: nodes) {
+	for (int x: target) {
 		t_block->offset.push_back(offset);
 		for (int i = graph->indptr[x]; i < graph->indptr[x+1]; ++i, ++offset) {
 			t_block->values.push_back(graph->indices[i]);
@@ -75,7 +75,7 @@ void sample_layer(struct graphStruct* graph, struct block* t_block, vector<int> 
 
 	t_block->unique = t_block->values;
 	sort(t_block->unique.begin(), t_block->unique.end());
-	cout << t_block->unique.size();
+	cout << "number of unique in block: " << t_block->unique.size() << '\n';
 	vector<int>::iterator ip = unique(t_block->unique.begin(), t_block->unique.begin() + t_block->unique.size());
 
 	t_block->unique.resize(distance(t_block->unique.begin(), ip));
@@ -88,14 +88,16 @@ void sample_layer(struct graphStruct* graph, struct block* t_block, vector<int> 
 int main() {
 
 	printf("\nsampling has started :) \n");
+	graphStruct sample_graph = {{0,3,6,7,9,10,11,11,12}, {1,2,3,0,4,7,0,0,5,1,3,1}};
 
 	block arr[4];
-	vector<int> targetNodes = {1,2,3,4};
+	vector<int> targetNodes = {1,2};
 	arr[0].unique = targetNodes;
 	// to_csr(g);
 	// todo: fill graphStruct while reading binary
 	// what to do with graph characteristic file (for output?)
-	// for (int i = 0; i < 3; ++i) {
-	// 	// sample_layer(&g, &block[i+1], block[i].unique);
-	// }
+	for (int i = 0; i < 3; ++i) {
+		sample_layer(&sample_graph, &arr[i+1], arr[i].unique);
+	// cout << arr[1].unique; # why cant i print this out?
+	}
 }
