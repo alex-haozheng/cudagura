@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <iostream>
 #include <vector>
+#include <fstream>
 #include <map>
 #include <algorithm>
 // #include <cub/cub.cuh>
@@ -58,13 +59,6 @@ void to_csr(vector<vector<int>> graph) {
 
 // todo: add one more parameter: vector<int> targetNodes
 void sample_layer(struct graphStruct* graph, struct block* t_block, vector<int> target) {
-	// for (int x : t_block->unique) {
-	// 	auto search = m.find(x);
-	// 	if (search != m.end()) {
-	// 		t_block->values.insert(t_block->values.end(), search->second.begin(), search->second.end());
-	// 	}
-	// }
-	// have all the values
 	int offset = 0;
 	for (int x: target) {
 		t_block->offset.push_back(offset);
@@ -87,17 +81,51 @@ void sample_layer(struct graphStruct* graph, struct block* t_block, vector<int> 
 
 int main() {
 
-	printf("\nsampling has started :) \n");
-	graphStruct sample_graph = {{0,3,6,7,9,10,11,11,12}, {1,2,3,0,4,7,0,0,5,1,3,1}};
+	fstream f("../data/graph", ios::in);
+	int num_nodes;
+	int num_edges;
+	int num_sample;
+	f >> num_nodes;
+	f >> num_edges;
+	f >> num_sample;
 
-	block arr[4];
-	vector<int> targetNodes = {1,2};
-	arr[0].unique = targetNodes;
-	// to_csr(g);
-	// todo: fill graphStruct while reading binary
-	// what to do with graph characteristic file (for output?)
-	for (int i = 0; i < 3; ++i) {
-		sample_layer(&sample_graph, &arr[i+1], arr[i].unique);
-	// cout << arr[1].unique; # why cant i print this out?
+	fstream nodesf("../data/indptr", ios::in | ios::binary );
+	if(!nodesf) {
+		cout << "cannot open file!\n";
+		return
 	}
+	long *nodes_b = (long *)malloc (num_nodes * sizeof(long));
+	nodesf.read((char *)nodes_b, (num_nodes * sizeof(long)));
+
+	fstream edgesf("../data/indices", ios::in | ios::binary );
+	if(!edgesf) {
+		cout << "cannot open file!\n";
+		return
+	}
+	long *edges_b = (long *)malloc (num_edges * sizeof(long));
+	edgesf.read((char *)edges_b, (num_edges * sizeof(long)));
+
+	fstream samplef("../data/train", ios::in | ios::binary );
+	if(!samplef) {
+		cout << "cannot open file!\n";
+		return
+	}
+	long *sample_b = (long *)malloc (num_sample * sizeof(long));
+	samplef.read((char *)sample_b, (num_sample * sizeof(long)));
+
+	// b = (long *)malloc (l)
+	// printf("\nsampling has started :) \n");
+	// graphStruct sample_graph = {{0,3,6,7,9,10,11,11,12}, {1,2,3,0,4,7,0,0,5,1,3,1}};
+
+	// block arr[4];
+	// vector<int> targetNodes = {1,2};
+	// arr[0].unique = targetNodes;
+	// // 1024 - 4096 batch size
+	// // to_csr(g);
+	// // todo: fill graphStruct while reading binary
+	// // what to do with graph characteristic file (for output?)
+	// for (int i = 0; i < 3; ++i) {
+	// 	sample_layer(&sample_graph, &arr[i+1], arr[i].unique);
+	// // cout << arr[1].unique; # why cant i print this out?
+	// }
 }
