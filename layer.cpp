@@ -6,6 +6,12 @@
 #include <fstream>
 #include <map>
 #include <algorithm>
+// #include <thrust/host_vector.h>
+// #include <thrust/device_vector.h>
+// #include <thrust/generate.h>
+// #include <thrust/sort.h>
+// #include <thrust/copy.h>
+// #include <thrust/random.h>
 // #include <cub/cub.cuh>
 
 using namespace std;
@@ -82,25 +88,27 @@ void sample_layer(struct graphStruct* graph, struct block* t_block, vector<int> 
 int main() {
 
 	fstream f("../data/graph", ios::in);
-	int num_nodes;
+	int num_ptrs;
 	int num_edges;
 	int num_sample;
-	f >> num_nodes;
+	f >> num_ptrs;
 	f >> num_edges;
 	f >> num_sample;
+
+	// confirmed that these are read in as ints
 
 	fstream nodesf("../data/indptr", ios::in | ios::binary );
 	if(!nodesf) {
 		cout << "cannot open file!\n";
-		return
+		return 0;
 	}
-	long *nodes_b = (long *)malloc (num_nodes * sizeof(long));
-	nodesf.read((char *)nodes_b, (num_nodes * sizeof(long)));
+	long *nodes_b = (long *)malloc (num_ptrs * sizeof(long));
+	nodesf.read((char *)nodes_b, (num_ptrs * sizeof(long)));
 
 	fstream edgesf("../data/indices", ios::in | ios::binary );
 	if(!edgesf) {
 		cout << "cannot open file!\n";
-		return
+		return 0;
 	}
 	long *edges_b = (long *)malloc (num_edges * sizeof(long));
 	edgesf.read((char *)edges_b, (num_edges * sizeof(long)));
@@ -108,17 +116,46 @@ int main() {
 	fstream samplef("../data/train", ios::in | ios::binary );
 	if(!samplef) {
 		cout << "cannot open file!\n";
-		return
+		return 0;
 	}
 	long *sample_b = (long *)malloc (num_sample * sizeof(long));
 	samplef.read((char *)sample_b, (num_sample * sizeof(long)));
 
-	// b = (long *)malloc (l)
-	// printf("\nsampling has started :) \n");
-	// graphStruct sample_graph = {{0,3,6,7,9,10,11,11,12}, {1,2,3,0,4,7,0,0,5,1,3,1}};
+	// finally done with loading the files
+	// for (int i = 0; i < 10; i++) {
+	// 	cout << sample_b[i] << '\n';
+	// }
 
-	// block arr[4];
-	// vector<int> targetNodes = {1,2};
+	// try without thrust first
+	vector<vector<int>> batches;
+
+	for (int i = 0; i < num_sample; i += 1024) {
+		vector<int> batch;
+		for (int j = i; j < i + 3; ++j) {
+			batch.push_back(sample_b[j]);
+		}
+		batches.push_back(batch);
+	}
+	// checking correctness
+	// for (int i = 0; i < batches.size(); ++i) {
+	// 	for (int j = 0; j < batches[i].size(); ++j) {
+	// 		cout << batches[i][j] << '\n';
+	// 		cout << sample_b[i*1024 + j] << '\n';
+	// 	}
+	// }
+
+	// // b = (long *)malloc (l)
+	// printf("\nsampling has started :) \n");
+	vector<int> a(nodes_b, nodes_b + num_ptrs);
+	vector<int> b(edges_b, edges_b + num_edges);
+	graphStruct sample_graph = {a, b};
+
+	block arr[batches.size()];
+	arr[0].unique = batches[0];
+	for (int i = 0; i < batches.size(); ++i) {
+		sample_layer(&sample_graph, &arr[i+1], arr[i].unique);
+	}
+	// vector<int> targetNodes();
 	// arr[0].unique = targetNodes;
 	// // 1024 - 4096 batch size
 	// // to_csr(g);
