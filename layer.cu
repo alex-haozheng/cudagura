@@ -4,8 +4,12 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
-#include <map>
-#include <algorithm>
+// #include <map>
+// #include <algorithm>
+#include <thrust/sort.h>
+#include <thrust/copy.h>
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
 // #include <thrust/host_vector.h>
 // #include <thrust/device_vector.h>
 // #include <thrust/generate.h>
@@ -63,7 +67,6 @@ void to_csr(vector<vector<int>> graph) {
 	}
 }
 
-// todo: add one more parameter: vector<int> targetNodes
 void sample_layer(struct graphStruct* graph, struct block* t_block, vector<int> target) {
 	int offset = 0;
 	for (int x: target) {
@@ -73,16 +76,35 @@ void sample_layer(struct graphStruct* graph, struct block* t_block, vector<int> 
 		}
 	} t_block->offset.push_back(offset);
 
-	t_block->unique = t_block->values;
-	sort(t_block->unique.begin(), t_block->unique.end());
-	cout << "number of unique in block: " << t_block->unique.size() << '\n';
-	vector<int>::iterator ip = unique(t_block->unique.begin(), t_block->unique.begin() + t_block->unique.size());
+	thrust::host_vector<int> h_vec(t_block->values);
+	//transfer data to the device
+	thrust::device_vector<int> d_vec = h_vec;
+	//sort data on the device
+	thrust::sort(d_vec.begin(), d_vec.end());
+	// unique only
+	thrust::unique(d_vec.begin(), d_vec.end());
+	// transfer data back to host
+	thrust::copy(d_vec.begin(), d_vec.end(), h_vec.begin());
 
-	t_block->unique.resize(distance(t_block->unique.begin(), ip));
-
-	for (ip = t_block->unique.begin(); ip != t_block->unique.end(); ++ip) {
-    cout << *ip << " ";
+	thrust::device_vector<int>::iterator dit = d_vec.begin();
+	for (thrust::host_vector<int>::iterator hit = h_vec.begin(); dit != d_vec.end(); ++hit, ++dit) {
+			// cout << *it << " ";
+			t_block->unique.push_back(*hit);
+	}
+	for (int i = 0; i < t_block->unique.size(); ++i) {
+    std::cout << t_block->unique[i] << '\n';
   }
+
+	// t_block->unique = t_block->values;
+	// sort(t_block->unique.begin(), t_block->unique.end());
+	cout << "number of unique in block: " << t_block->unique.size() << '\n';
+	// vector<int>::iterator ip = unique(t_block->unique.begin(), t_block->unique.begin() + t_block->unique.size());
+
+	// t_block->unique.resize(distance(t_block->unique.begin(), ip));
+
+	// for (ip = t_block->unique.begin(); ip != t_block->unique.end(); ++ip) {
+  //   cout << *ip << '\n';
+  // }
 }
 
 int main() {
@@ -129,14 +151,14 @@ int main() {
 	// try without thrust first
 	vector<vector<int>> batches;
 
-	for (int i = 0; i < num_sample; i += 1024) {
+	for (int i = 0; i < num_sample - 1024; i += 1024) {
 		vector<int> batch;
-		for (int j = i; j < i + 3; ++j) {
+		for (int j = i; j < i + 1024; ++j) {
 			batch.push_back(sample_b[j]);
 		}
 		batches.push_back(batch);
 	}
-	// checking correctness
+	//checking correctness
 	// for (int i = 0; i < batches.size(); ++i) {
 	// 	for (int j = 0; j < batches[i].size(); ++j) {
 	// 		cout << batches[i][j] << '\n';
@@ -152,7 +174,11 @@ int main() {
 
 	block arr[batches.size()];
 	arr[0].unique = batches[0];
-	for (int i = 0; i < batches.size(); ++i) {
+	// the first unique is not unique (not sure why sample_b has duplicates)
+	// for (int i = 0; i < arr[0].unique.size(); ++i) {
+	// 	cout << arr[0].unique[i] << '\n';
+	// }
+	for (int i = 0; i < 3; ++i) {
 		sample_layer(&sample_graph, &arr[i+1], arr[i].unique);
 	}
 	// vector<int> targetNodes();
