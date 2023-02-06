@@ -66,7 +66,7 @@ void to_csr(vector<vector<int>> graph) {
 		printf("indices %d: %d\n", i, indices[i]);
 	}
 }
-
+//almost done
 void sample_layer(struct graphStruct* graph, struct block* t_block, vector<int> target) {
 	int offset = 0;
 	for (int x: target) {
