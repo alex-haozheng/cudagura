@@ -6,6 +6,8 @@
 #include <thrust/copy.h>
 #include <thrust/random.h>
 #include <stdio.h>
+#include <thrust/execution_policy.h>
+
 
 int main() {
   // Generate 32M random numbers serially.
@@ -23,17 +25,22 @@ int main() {
   // Sort data on the device.
   thrust::sort(d_vec.begin(), d_vec.end());
 
-  thrust::unique(d_vec.begin(), d_vec.end());
+  thrust::device_vector<int>::iterator newLast = thrust::unique(d_vec.begin(), d_vec.end());
   // Transfer data back to host.
-  thrust::copy(d_vec.begin(), d_vec.end(), h_vec.begin());
+  thrust::copy(d_vec.begin(), newLast, h_vec.begin());
 
   std::vector<int> newV;
   thrust::device_vector<int>::iterator dit = d_vec.begin();
-	for (thrust::host_vector<int>::iterator hit = h_vec.begin(); dit != d_vec.end(); ++hit, ++dit) {
+	for (thrust::host_vector<int>::iterator hit = h_vec.begin(); dit != newLast; ++hit, ++dit) {
 		std::cout << *hit << " ";
 			// t_block->unique.push_back(*hit);
 	}
   std::cout << '\n';
+
+  // for (thrust::device_vector<int>::iterator dit = d_vec.begin(); dit != d_vec.end(); ++dit) {
+	// 	std::cout << *dit << " ";
+	// }
+  // std::cout << '\n';
 
   for (int i = 0; i < 5; i++) {
     newV.push_back(h_vec[i]);
