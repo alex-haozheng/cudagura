@@ -82,12 +82,11 @@ void sample_layer(struct graphStruct* graph, struct block* t_block, vector<int> 
 	//sort data on the device
 	thrust::sort(d_vec.begin(), d_vec.end());
 	// unique only
-	thrust::unique(d_vec.begin(), d_vec.end());
+	thrust::device_vector<int>::iterator newLast = thrust::unique(d_vec.begin(), d_vec.end());
 	// transfer data back to host
-	thrust::copy(d_vec.begin(), d_vec.end(), h_vec.begin());
+	thrust::copy(d_vec.begin(), newLast, h_vec.begin());
 
-	thrust::device_vector<int>::iterator dit = d_vec.begin();
-	for (thrust::host_vector<int>::iterator hit = h_vec.begin(); dit != d_vec.end(); ++hit, ++dit) {
+	for (thrust::host_vector<int>::iterator hit = h_vec.begin(); dit != h_vec.end(); ++hit) {
 			// cout << *it << " ";
 			t_block->unique.push_back(*hit);
 	}

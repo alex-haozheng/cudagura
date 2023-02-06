@@ -31,20 +31,20 @@ int main() {
 
   std::vector<int> newV;
   thrust::device_vector<int>::iterator dit = d_vec.begin();
-	for (thrust::host_vector<int>::iterator hit = h_vec.begin(); dit != newLast; ++hit, ++dit) {
-		std::cout << *hit << " ";
-			// t_block->unique.push_back(*hit);
-	}
-  std::cout << '\n';
-
-  // for (thrust::device_vector<int>::iterator dit = d_vec.begin(); dit != d_vec.end(); ++dit) {
-	// 	std::cout << *dit << " ";
+	// for (thrust::host_vector<int>::iterator hit = h_vec.begin(); dit != newLast; ++hit, ++dit) {
+	// 	std::cout << *hit << " ";
+	// 		// t_block->unique.push_back(*hit);
 	// }
   // std::cout << '\n';
 
-  for (int i = 0; i < 5; i++) {
-    newV.push_back(h_vec[i]);
-  }
+  for (thrust::host_vector<int>::iterator hit = h_vec.begin(); hit != h_vec.end(); ++hit) {
+		std::cout << *hit << " ";
+	}
+  std::cout << '\n';
+
+  // for (int i = 0; i < ; i++) {
+  //   newV.push_back(h_vec[i]);
+  // }
 
   for (int i = 0; i < newV.size(); ++i) {
     std::cout << newV[i] << '\n';
