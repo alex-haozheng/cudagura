@@ -3,27 +3,23 @@
 #include <stdbool.h>
 #include <iostream>
 #include <vector>
+#include <random>
 #include <fstream>
-// #include <map>
-// #include <algorithm>
-#include <thrust/sort.h>
-#include <thrust/copy.h>
-#include <thrust/host_vector.h>
-#include <thrust/device_vector.h>
-// #include <thrust/host_vector.h>
-// #include <thrust/device_vector.h>
-// #include <thrust/generate.h>
-// #include <thrust/sort.h>
-// #include <thrust/copy.h>
-// #include <thrust/random.h>
-// #include <cub/cub.cuh>
+#include <chrono>
+#include <algorithm>
 
 using namespace std;
 
 typedef struct block {
+	// thrust::device_vector
 	vector<int> offset;
-	vector<int> values;
+	vector<int> indices;
 	vector<int> unique;
+
+	void clear(){
+		offset.clear();
+		indices.clear();
+	}
 } block;
 
 typedef struct graphStruct {
@@ -72,34 +68,17 @@ void sample_layer(struct graphStruct* graph, struct block* t_block, vector<int> 
 	for (int x: target) {
 		t_block->offset.push_back(offset);
 		for (int i = graph->indptr[x]; i < graph->indptr[x+1]; ++i, ++offset) {
-			t_block->values.push_back(graph->indices[i]);
+			t_block->indices.push_back(graph->indices[i]);
 		}
 	} t_block->offset.push_back(offset);
 
-	thrust::host_vector<int> h_vec(t_block->values);
-	//transfer data to the device
-	thrust::device_vector<int> d_vec = h_vec;
-	//sort data on the device
-	thrust::sort(d_vec.begin(), d_vec.end());
-	// unique only
-	thrust::device_vector<int>::iterator newLast = thrust::unique(d_vec.begin(), d_vec.end());
-	// transfer data back to host
-	thrust::copy(d_vec.begin(), newLast, h_vec.begin());
 
-	for (thrust::host_vector<int>::iterator hit = h_vec.begin(); dit != h_vec.end(); ++hit) {
-			// cout << *it << " ";
-			t_block->unique.push_back(*hit);
-	}
-	for (int i = 0; i < t_block->unique.size(); ++i) {
-    std::cout << t_block->unique[i] << '\n';
-  }
+	t_block->unique = t_block->indices;
+	sort(t_block->unique.begin(), t_block->unique.end());
+	vector<int>::iterator ip = unique(t_block->unique.begin(), t_block->unique.begin() + t_block->unique.size());
 
-	// t_block->unique = t_block->values;
-	// sort(t_block->unique.begin(), t_block->unique.end());
+	t_block->unique.resize(distance(t_block->unique.begin(), ip));
 	cout << "number of unique in block: " << t_block->unique.size() << '\n';
-	// vector<int>::iterator ip = unique(t_block->unique.begin(), t_block->unique.begin() + t_block->unique.size());
-
-	// t_block->unique.resize(distance(t_block->unique.begin(), ip));
 
 	// for (ip = t_block->unique.begin(); ip != t_block->unique.end(); ++ip) {
   //   cout << *ip << '\n';
@@ -124,6 +103,10 @@ int main() {
 		return 0;
 	}
 	long *nodes_b = (long *)malloc (num_ptrs * sizeof(long));
+	// cudaMalloc((void**)&this->indptr, ((num_ptrs + 1) * sizeof(long)))
+	// malloc
+	// mallocmanaged
+	// mallocHostAlloc
 	nodesf.read((char *)nodes_b, (num_ptrs * sizeof(long)));
 
 	fstream edgesf("../data/indices", ios::in | ios::binary );
@@ -132,6 +115,7 @@ int main() {
 		return 0;
 	}
 	long *edges_b = (long *)malloc (num_edges * sizeof(long));
+	// cudaMalloc((void**)&this->indptr, ((num_ptrs + 1) * sizeof(long)))
 	edgesf.read((char *)edges_b, (num_edges * sizeof(long)));
 
 	fstream samplef("../data/train", ios::in | ios::binary );
@@ -149,6 +133,7 @@ int main() {
 
 	// try without thrust first
 	vector<vector<int>> batches;
+	// number of epochs
 
 	for (int i = 0; i < num_sample - 1024; i += 1024) {
 		vector<int> batch;
@@ -157,6 +142,9 @@ int main() {
 		}
 		batches.push_back(batch);
 	}
+
+	random_device rd;
+	mt19937 generator(rd());
 	//checking correctness
 	// for (int i = 0; i < batches.size(); ++i) {
 	// 	for (int j = 0; j < batches[i].size(); ++j) {
@@ -172,22 +160,16 @@ int main() {
 	graphStruct sample_graph = {a, b};
 
 	block arr[batches.size()];
-	arr[0].unique = batches[0];
-	// the first unique is not unique (not sure why sample_b has duplicates)
-	// for (int i = 0; i < arr[0].unique.size(); ++i) {
-	// 	cout << arr[0].unique[i] << '\n';
-	// }
-	for (int i = 0; i < 3; ++i) {
-		sample_layer(&sample_graph, &arr[i+1], arr[i].unique);
+	int epochs = 3;
+	for(int j = 0; j < epochs; ++j) {
+		shuffle(batches.begin(), batches.end(), generator);
+		arr[0].unique = batches[0];
+		auto start = std::chrono::high_resolution_clock::now();
+		for (int i = 0; i < batches.size() - 2; ++i) {
+			sample_layer(&sample_graph, &arr[i+1], arr[i].unique);
+		}
+		auto stop = std::chrono::high_resolution_clock::now();
+		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+		cout << duration.count()/(10* batches.size() - 2) << '\n';
 	}
-	// vector<int> targetNodes();
-	// arr[0].unique = targetNodes;
-	// // 1024 - 4096 batch size
-	// // to_csr(g);
-	// // todo: fill graphStruct while reading binary
-	// // what to do with graph characteristic file (for output?)
-	// for (int i = 0; i < 3; ++i) {
-	// 	sample_layer(&sample_graph, &arr[i+1], arr[i].unique);
-	// // cout << arr[1].unique; # why cant i print this out?
-	// }
 }
