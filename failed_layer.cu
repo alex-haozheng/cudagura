@@ -32,7 +32,7 @@ typedef struct graphStruct {
 } graphStruct;
 
 
-void remove_duplicates(thrust::device_vector<long>& nodes){
+void remove_duplicates(thrust::device_vector<int>& nodes){
   if(nodes.size() == 0)return;
   if(nodes.size() > 1){
     nvtxRangePush("remove duplicates"); // built in timing?
@@ -43,8 +43,8 @@ void remove_duplicates(thrust::device_vector<long>& nodes){
   }
 }
 
-//almost done
-void sample_layer(struct graphStruct* graph, struct block* t_block, vector<int> target) {
+//probably not parallelized
+__global__ void sample_layer(struct graphStruct* graph, struct block* t_block, thrust::device_vector<int> target) {
 	int offset = 0;
 	//parallelize this for loop
 	for (int x: target) {
@@ -53,7 +53,7 @@ void sample_layer(struct graphStruct* graph, struct block* t_block, vector<int> 
 			t_block->indices.push_back(graph->indices[i]);
 		}
 	} t_block->offset.push_back(offset);
-
+	t_block->unique = t_block->indices;
 }
 
 int main() {
@@ -119,23 +119,35 @@ int main() {
 	vector<int> a(nodes_h, nodes_h + num_ptrs);
 	vector<int> b(edges_h, edges_h + num_edges);
 	graphStruct h_graph = {a, b};
-	graphStruct d_graph
+	graphStruct *d_graph;
 
-	cudaMalloc((void **) &d_graph, sizeof(graphStruct h_graph));
-	cudaMemcpy(d_graph, h_graph, sizeof(graphStruct h_graph), cudaMemcpyHostToDevice);
+	cudaMalloc((void **) &d_graph, sizeof(h_graph));
+	cudaMemcpy(d_graph, &h_graph, sizeof(h_graph), cudaMemcpyHostToDevice);
 
 
 	block arr[batches.size()];
+	block *d_arr;
+
+	cudaMalloc((void **) &d_arr, sizeof(arr));
+	cudaMemcpy(d_arr, &arr, sizeof(arr), cudaMemcpyHostToDevice);
+
 	random_device rd;
 	mt19937 generator(rd());
 
 	int epochs = 3;
 	for(int j = 0; j < epochs; ++j) {
 		shuffle(batches.begin(), batches.end(), generator);
-		arr[0].unique = batches[0];
+		d_arr[0].unique = batches[0];
 		cout << "epoch: " << j << '\n';
 		for (int i = 0; i < batches.size(); ++i) {
-			sample_layer(&h_graph, &arr[i+1], arr[i].unique);
+			sample_layer<<<1,1>>>(d_graph, &d_arr[i+1], d_arr[i].unique);
+			// sample_layer(&h_graph, &arr[i+1], d_arr[i].unique);
+			remove_duplicates(d_arr[i+1].unique);
 		}
 	}
+	cudaFree(edges_d);
+	cudaFree(d_arr);
+	cudaFree(nodes_d);
+	cudaFree(sample_d);	
+	cudaFree(d_graph);
 }
