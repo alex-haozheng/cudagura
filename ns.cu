@@ -24,7 +24,7 @@ NeighbourSampler::NeighbourSampler(std::shared_ptr<Dataset> dataset,
     this->dataset = dataset;
     this->fanout = fanout;
     dr = new ArrayMap(this->dataset->num_nodes);
-    this->self_edge = self_edge ;
+    this->self_edge = self_edge;
     unsigned long seed = \
       std::chrono::system_clock::now().time_since_epoch().count();
     cudaMalloc(&dev_curand_states, TOTAL_RAND_STATES * sizeof(curandState));
@@ -71,21 +71,21 @@ void neigh_sample_based_on_offsets(long * in, long size,\
       int id = threadId;
       while(id < size){
           long nd = in[id];
-          #ifdef DEBUG
-              assert(nd < num_nodes);
-              assert(indices[offsets[id]] < size);
-          #endif
+          // #ifdef DEBUG
+          //     assert(nd < num_nodes);
+          //     assert(indices[offsets[id]] < size);
+          // #endif
           // Todo
-          long nbs_size = graph_indptr[nd+1] -graph_indptr[nd];
+          long nbs_size = graph_indptr[nd+1] - graph_indptr[nd];
           long *read = &graph_indices[graph_indptr[nd]];
 
           long *write = &indices[offsets[id]];
           if((nbs_size > fanout) && (fanout != -1)){
              for(int j = 0; j < fanout; j++){
                int sid = (int) (curand_uniform(&random_states[threadId]) * nbs_size);
-               #ifdef DEBUG
-                    assert(sid < nbs_size);
-               #endif
+              //  #ifdef DEBUG
+              //       assert(sid < nbs_size);
+              //  #endif
                write[j] = read[sid];
              }
              if(self_edge){
@@ -127,15 +127,13 @@ void NeighbourSampler::layer_sample(thrust::device_vector<long> &in,
 
 
        indices.resize(offsets[offsets.size()-1]);
-
+      // dataset is basically the graphs 
        neigh_sample_based_on_offsets<<<BLOCK_SIZE(in.size()), THREAD_SIZE>>>
        (thrust::raw_pointer_cast(in.data()), in.size(),
             thrust::raw_pointer_cast(offsets.data()),
              thrust::raw_pointer_cast(indices.data()),
               this->dataset->indptr, this->dataset->indices, this->dataset->num_nodes,\
                   dev_curand_states, TOTAL_RAND_STATES, fanout, this->self_edge);
-
-
   }
 
 void NeighbourSampler::sample(thrust::device_vector<long> &target_nodes, Sample &s){

@@ -109,6 +109,10 @@ int main() {
 	// mallocHostAlloc
 	nodesf.read((char *)nodes_b, (num_ptrs * sizeof(long)));
 
+	for (int i = 0; i < 9; ++i){
+			printf("%d\n", nodes_b[i]);
+		}
+
 	fstream edgesf("../data/indices", ios::in | ios::binary );
 	if(!edgesf) {
 		cout << "cannot open file!\n";
@@ -165,7 +169,7 @@ int main() {
 		shuffle(batches.begin(), batches.end(), generator);
 		arr[0].unique = batches[0];
 		auto start = std::chrono::high_resolution_clock::now();
-		for (int i = 0; i < batches.size() - 2; ++i) {
+		for (int i = 0; i < 3; ++i) {
 			sample_layer(&sample_graph, &arr[i+1], arr[i].unique);
 		}
 		auto stop = std::chrono::high_resolution_clock::now();
