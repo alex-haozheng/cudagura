@@ -139,10 +139,6 @@ int main() {
 	long *sample_b = (long *)malloc (num_sample * sizeof(long));
 	samplef.read((char *)sample_b, (num_sample * sizeof(long)));
 
-<<<<<<< HEAD
-	// to_csr(g);
-	sample_layer(g, &b);
-=======
 	// finally done with loading the files
 	// for (int i = 0; i < 10; i++) {
 	// 	cout << sample_b[i] << '\n';
@@ -189,5 +185,4 @@ int main() {
 		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 		cout << duration.count()/(10* batches.size() - 2) << '\n';
 	}
->>>>>>> alex
 }

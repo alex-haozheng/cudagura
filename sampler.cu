@@ -220,10 +220,10 @@ int main() {
 	// gpuErrchk(cudaMemcpy(nodes_g, nodes_h, (num_ptrs - 1) * sizeof(long), cudaMemcpyHostToDevice));
 	// gpuErrchk(cudaMalloc((void**)&edges_g, (num_edges - 1) * sizeof(long)));
 	// gpuErrchk(cudaMemcpy(edges_g, edges_h, (num_edges - 1) * sizeof(long), cudaMemcpyHostToDevice));
-	// cudaMallocManaged(&nodes_g, (num_ptrs - 1) * sizeof(long));
-	// cudaMallocManaged(&edges_g, (num_edges - 1) * sizeof(long));
-	cudaMallocHost((void**)&nodes_g, (num_ptrs - 1) * sizeof(long));
-	cudaMallocHost((void**)&edges_g, (num_edges - 1) * sizeof(long));
+	cudaMallocManaged(&nodes_g, (num_ptrs - 1) * sizeof(long));
+	cudaMallocManaged(&edges_g, (num_edges - 1) * sizeof(long));
+	// cudaMallocHost((void**)&nodes_g, (num_ptrs - 1) * sizeof(long));
+	// cudaMallocHost((void**)&edges_g, (num_edges - 1) * sizeof(long));
 
 	
 	const int TOTAL_RAND_STATES = 1024 * 256;
@@ -258,7 +258,7 @@ int main() {
 			d_arr[0]->unique = b;
 			for (int i = 1; i <= 3; ++i) {
 				// still passing in wrong pointer
-				sample_layer(nodes_g, edges_g, d_arr[i-1]->unique, d_arr[i]->offset, d_arr[i]->indices, 10, num_ptrs, dev_curand_states);
+				sample_layer(nodes_g, edges_g, d_arr[i-1]->unique, d_arr[i]->offset, d_arr[i]->indices, 20, num_ptrs, dev_curand_states);
 				// for (int c = 0; c < d_arr[i]->indices.size(); ++c) {
 				// 	cout << d_arr[i]->indices[c] << '\n';
 				// }
@@ -279,16 +279,3 @@ int main() {
   cudaEventDestroy(stop);
 	free(d_arr);
 }
-
-// //probably not parallelized
-// void h_sample_layer(struct graphStruct* graph, struct block* t_block, thrust::device_vector<int> target) {
-// 	int offset = 0;
-// 	//parallelize this for loop
-// 	for (int x: target) {
-// 		t_block->offset.push_back(offset);
-// 		for (int i = graph->indptr[x]; i < graph->indptr[x+1]; ++i, ++offset) {
-// 			t_block->indices.push_back(graph->indices[i]);
-// 		}
-// 	} t_block->offset.push_back(offset);
-// 	t_block->unique = t_block->indices;
-// }
